@@ -1,0 +1,104 @@
+Full Code:
+#include <iostream>
+#include <omp.h>
+#include <climits>
+using namespace std;
+
+------------------------------------------------------------------------------------------------------------------------------------
+Line-by-Line Explanation:
+#include <iostream>
+This includes the standard input/output stream library, which allows you to use cin (for input) and cout (for output) to interact with the user and print results to the console.
+
+#include <omp.h>
+This includes the OpenMP library. OpenMP is used to make the program parallel by using multiple threads to speed up certain operations. The #pragma omp directives in the code will instruct the compiler to parallelize the specified loops.
+
+#include <climits>
+This includes the C++ library that defines constants for the limits of fundamental data types. Specifically, INT_MAX (the maximum value an int can hold) and INT_MIN (the minimum value an int can hold) are used in this program for initializing the min_value and max_value variables.
+
+using namespace std;
+This allows the use of standard C++ features like cout, cin, etc., without needing to prefix them with std::.
+------------------------------------------------------------------------------------------------------------------------------------
+
+Functions (Min, Max, Sum, Average):
+5. void min_reduction(int arr[], int n)
+This defines the function to compute the minimum value in an array arr[] of size n.
+
+int min_value = INT_MAX;
+
+Initializes the variable min_value to the maximum possible integer value (INT_MAX). This is because we are trying to find the minimum value, so starting with a very large number ensures that any smaller value in the array will replace it.
+
+#pragma omp parallel for reduction(min: min_value)
+
+#pragma omp parallel for: This directive tells the compiler to parallelize the following for loop. It divides the loop iterations among multiple threads to be processed concurrently.
+
+reduction(min: min_value): This specifies that the variable min_value should be treated as a reduction variable. Each thread gets its own private copy of min_value, and when all threads finish, their results are combined to give the final minimum value.
+
+for (int i = 0; i < n; i++)
+
+This is the loop that iterates through each element of the array arr[].
+
+if (arr[i] < min_value) { min_value = arr[i]; }
+
+For each element in the array, if it’s smaller than the current min_value, we update min_value to this new smaller value.
+
+cout << "Minimum value: " << min_value << endl;
+
+After the loop finishes, we print the minimum value.
+
+11. void max_reduction(int arr[], int n)
+This function is similar to min_reduction() but finds the maximum value in the array.
+
+int max_value = INT_MIN;: Initializes max_value to the minimum possible integer value (INT_MIN) because we want to find the largest value in the array.
+
+The rest of the function follows the same pattern as min_reduction(), but uses the max reduction operation.
+
+12. void sum_reduction(int arr[], int n)
+This function calculates the sum of all the elements in the array.
+
+int sum = 0;: Initializes the sum to 0.
+
+#pragma omp parallel for reduction(+: sum): This tells OpenMP to parallelize the loop and use a reduction operation for summing the values (+ is the addition operation).
+
+sum += arr[i];: Adds each element of the array to the sum.
+
+cout << "Sum: " << sum << endl;: After finishing the loop, it prints the sum.
+
+13. void average_reduction(int arr[], int n)
+This function calculates the average of the elements in the array.
+
+It follows the same pattern as sum_reduction() to compute the total sum using parallel reduction.
+
+After the sum is calculated, it computes the average by dividing the sum by the number of elements n.
+
+cout << "Average: " << (double)sum / n << endl;: It prints the average. The sum is cast to double to ensure proper floating-point division.
+------------------------------------------------------------------------------------------------------------------------------------
+
+main() Function:
+14. int *arr, n;
+arr is a pointer to an integer array that will store the elements.
+
+n is an integer that will store the number of elements in the array.
+
+15. cout << "\nEnter total number of elements: ";
+This prints the message asking the user to enter the number of elements in the array.
+
+16. cin >> n;
+This takes the input from the user for the number of elements (n).
+
+17. arr = new int[n];
+This dynamically allocates memory for the array arr with n elements. The array will be used to store the integers the user inputs.
+
+18. cout << "\nEnter elements: ";
+This prompts the user to enter the elements of the array.
+
+19. for (int i = 0; i < n; i++) { cin >> arr[i]; }
+This loop allows the user to input the n elements of the array.
+
+20. min_reduction(arr, n); max_reduction(arr, n); sum_reduction(arr, n); average_reduction(arr, n);
+These lines call the four functions (min_reduction, max_reduction, sum_reduction, and average_reduction) to compute the minimum, maximum, sum, and average values of the array.
+
+21. delete[] arr;
+This deallocates the dynamically allocated memory to prevent memory leaks. Since we used new[] to allocate memory, we must use delete[] to free it when we're done.
+
+22. return 0;
+This ends the main() function and returns 0, indicating successful execution.

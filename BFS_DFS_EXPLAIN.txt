@@ -1,0 +1,154 @@
+1. Libraries:
+
+#include <iostream>
+#include <vector>
+#include <queue>
+#include <stack>
+#include <omp.h>
+
+iostream: Used for input/output operations.
+vector: Used to store the graph as an adjacency list.
+queue: Used for BFS, which follows a queue-based structure.
+stack: Used for DFS, which follows a stack-based structure.
+omp.h: OpenMP header, used to add parallelism.
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+2. Global Variables:
+
+const int MAX = 100000;  // Maximum number of nodes
+vector<int> graph[MAX];  // Adjacency list to store the graph
+bool visited[MAX];       // Visited array for BFS and DFS
+
+MAX: The maximum number of nodes in the graph.
+graph[MAX]: Adjacency list to represent the graph where each node has a list of adjacent nodes.
+visited[MAX]: Boolean array to keep track of which nodes have been visited during BFS and DFS.
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+3. Parallel DFS (Depth-First Search) Function:
+
+void parallelDFS(int start) {
+    stack<int> s;
+    visited[start] = true;
+    s.push(start);
+
+    cout << "\nParallel DFS Traversal: ";
+
+    while (!s.empty()) {
+        int node = s.top();
+        s.pop();
+        cout << node << " ";
+
+        // Parallelize the traversal of neighbors of the current node
+        #pragma omp parallel for
+        for (int i = 0; i < graph[node].size(); i++) {
+            int adj_node = graph[node][i];
+            if (!visited[adj_node]) {
+                #pragma omp critical
+                {
+                    if (!visited[adj_node]) {
+                        visited[adj_node] = true;
+                        s.push(adj_node);
+                    }
+                }
+            }
+        }
+    }
+}
+
+stack<int> s: A stack is used to keep track of nodes to visit (DFS uses stack-based structure).
+visited[start] = true: Mark the starting node as visited.
+#pragma omp parallel for: This directive parallelizes the iteration over neighbors of the current node, i.e., all neighbors are processed concurrently.
+#pragma omp critical: Since we are modifying the visited array and the stack s (shared resources), the critical section ensures that these operations are performed by only one thread at a time to avoid race conditions.
+Output: The nodes are printed as they are visited in the DFS traversal order.
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+4. Parallel BFS (Breadth-First Search) Function:
+
+void parallelBFS(int start) {
+    queue<int> q;
+    visited[start] = true;
+    q.push(start);
+
+    cout << "\nParallel BFS Traversal: ";
+
+    while (!q.empty()) {
+        int node = q.front();
+        q.pop();
+        cout << node << " ";
+
+        // Parallel processing of the neighbors
+        #pragma omp parallel for
+        for (int i = 0; i < graph[node].size(); i++) {
+            int neighbor = graph[node][i];
+            if (!visited[neighbor]) {
+                #pragma omp critical
+                {
+                    if (!visited[neighbor]) {
+                        visited[neighbor] = true;
+                        q.push(neighbor);
+                    }
+                }
+            }
+        }
+    }
+}
+
+queue<int> q: A queue is used to manage the breadth-first traversal of nodes.
+visited[start] = true: The starting node is marked as visited.
+#pragma omp parallel for: The traversal of neighbors is parallelized so that multiple neighbors can be processed concurrently.
+#pragma omp critical: Similar to DFS, we use critical to ensure that the visited array and queue q are modified safely by only one thread at a time.
+Output: The nodes are printed as they are visited in the BFS traversal order.
+------------------------------------------------------------------------------------------------------------------------------------------------
+
+5. Main Function:
+
+int main() {
+    int n, m, start_node;
+
+    // User input for graph size and edges
+    cout << "Enter number of nodes and edges: ";
+    cin >> n >> m;
+
+    cout << "Enter the edges (u v) of the graph:\n";
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+        graph[v].push_back(u);  // Undirected graph
+    }
+
+    // Ask for the starting node
+    cout << "Enter the starting node: ";
+    cin >> start_node;
+
+    // Initialize visited array to false for both BFS and DFS
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        visited[i] = false;
+    }
+
+    // Perform Parallel DFS
+    parallelDFS(start_node);
+
+    // Reinitialize visited array to false for BFS (since BFS and DFS share the same visited array)
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        visited[i] = false;
+    }
+
+    // Perform Parallel BFS
+    parallelBFS(start_node);
+
+    cout << endl;
+    return 0;
+}
+
+Graph Input: The user is prompted to input the number of nodes (n) and edges (m) of the graph. Then, the user is asked to input each edge (pair of nodes u and v), and these are added to the adjacency list graph.
+Starting Node: The user is prompted to input the starting node for both DFS and BFS traversals.
+Initialize visited Array: The visited array is initialized to false for all nodes using OpenMP in parallel.
+Parallel DFS: The parallelDFS function is called to perform a parallel DFS traversal starting from the specified node.
+Reinitialize visited Array: After DFS, the visited array is reinitialized to false because both DFS and BFS share this array.
+Parallel BFS: The parallelBFS function is called to perform a parallel BFS traversal starting from the specified node.
+
+------------------------------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------------------------------

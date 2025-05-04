@@ -1,0 +1,173 @@
+Include Statements and Function Declarations
+
+#include<iostream>
+#include<stdlib.h>
+#include<omp.h>
+using namespace std;
+
+iostream: To handle input and output operations (cin, cout).
+stdlib.h: For memory allocation (new, delete).
+omp.h: To use OpenMP for parallelism.
+---------------------------------------------------------------------------------------------------------------------------------
+
+void mergesort(int a[], int i, int j);
+void merge(int a[], int i1, int j1, int i2, int j2);
+
+	mergesort(int a[], int i, int j): Recursively sorts the subarray from index i to index j.
+	merge(int a[], int i1, int j1, int i2, int j2): Merges two sorted subarrays into a single sorted array.
+---------------------------------------------------------------------------------------------------------------------------------
+
+Mergesort Function (Recursive)
+
+void mergesort(int a[], int i, int j)
+{
+    int mid;
+    if (i < j) {
+        mid = (i + j) / 2;
+
+The mergesort function takes an array a[] and the indices i and j which represent the start and end indices of the subarray.
+The base condition is if (i < j), ensuring that the function works recursively only on subarrays of size greater than one.
+mid = (i + j) / 2 calculates the midpoint of the subarray.
+---------------------------------------------------------------------------------------------------------------------------------
+
+        // Parallelize the two recursive merge sort calls
+        #pragma omp parallel 
+        {
+            // Print the number of threads used in this parallel region
+            #pragma omp single
+            {
+                cout << "\nNumber of threads in mergesort: " << omp_get_num_threads() << endl;
+            }
+
+            #pragma omp sections
+            {
+                #pragma omp section
+                {
+                    mergesort(a, i, mid);  // Sort the first half
+                }
+
+                #pragma omp section
+                {
+                    mergesort(a, mid + 1, j);  // Sort the second half
+                }
+            }
+        }
+
+#pragma omp parallel: Starts a parallel region where the two recursive calls to mergesort are executed in parallel.
+#pragma omp single: Ensures that only one thread prints the number of threads used in the parallel region.
+#pragma omp sections: Divides the work into sections. Each section runs a separate recursive call to mergesort, one for the left half and one for the right half of the array.
+#pragma omp section marks the individual tasks (sorting the left and right halves) to be executed in parallel.
+
+---------------------------------------------------------------------------------------------------------------------------------
+
+        merge(a, i, mid, mid + 1, j);  // Merge the sorted halves
+    }
+}
+
+After sorting the two halves, merge(a, i, mid, mid + 1, j) is called to merge the sorted halves back together into a single sorted subarray.
+---------------------------------------------------------------------------------------------------------------------------------
+
+Merge Function
+
+void merge(int a[], int i1, int j1, int i2, int j2)
+{
+    int temp[1000];
+    int i, j, k;
+    i = i1;
+    j = i2;
+    k = 0;
+
+merge takes two sorted subarrays: the first from index i1 to j1, and the second from index i2 to j2.
+temp[1000]: A temporary array to hold the merged result.
+i, j, and k are used as indices for the two subarrays and the temporary array.
+---------------------------------------------------------------------------------------------------------------------------------
+
+    // Merge the two sorted halves into the temp array
+    while (i <= j1 && j <= j2) {
+        if (a[i] < a[j]) {
+            temp[k++] = a[i++];
+        } else {
+            temp[k++] = a[j++];
+        }
+    }
+
+The while loop merges the two subarrays by comparing the elements at indices i and j and placing the smaller element into the temp array.
+The process continues until one of the subarrays is exhausted.
+---------------------------------------------------------------------------------------------------------------------------------
+
+    while (i <= j1) {
+        temp[k++] = a[i++];
+    }
+
+    while (j <= j2) {
+        temp[k++] = a[j++];
+    }
+
+These two while loops handle the remaining elements in the left or right subarray if one of the subarrays is exhausted before the other.
+---------------------------------------------------------------------------------------------------------------------------------
+
+    // Copy the sorted elements back into the original array
+    for (i = i1, j = 0; i <= j2; i++, j++) {
+        a[i] = temp[j];
+    }
+}
+
+The merged result is copied back from the temp array to the original array a[].
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------
+
+Main Function
+
+int *a, n, i;
+cout << "\nEnter total number of elements: ";
+cin >> n;
+a = new int[n];
+
+Prompts the user for the number of elements n and dynamically allocates memory for the array a[].
+---------------------------------------------------------------------------------------------------------------------------------
+
+cout << "\nEnter elements: ";
+for (i = 0; i < n; i++) {
+    cin >> a[i];
+}
+
+Prompts the user to enter the n elements of the array.
+---------------------------------------------------------------------------------------------------------------------------------
+
+// Start timer
+double start_time = omp_get_wtime();
+
+Starts a timer to measure the time taken for the sorting operation. omp_get_wtime() returns the current wall-clock time in seconds.
+---------------------------------------------------------------------------------------------------------------------------------
+
+mergesort(a, 0, n - 1);  // Perform merge sort
+
+Calls the mergesort function to sort the entire array, starting from index 0 to n-1.
+---------------------------------------------------------------------------------------------------------------------------------
+
+// Stop timer
+double end_time = omp_get_wtime();
+
+Stops the timer and records the end time.
+---------------------------------------------------------------------------------------------------------------------------------
+
+cout << "\nSorted array is: ";
+for (i = 0; i < n; i++) {
+    cout << "\n" << a[i];
+}
+
+Outputs the sorted array.
+---------------------------------------------------------------------------------------------------------------------------------
+
+// Print time taken for sorting
+cout << "\nTime taken: " << end_time - start_time << " seconds." << endl;
+
+Prints the time taken to perform the sorting operation.
+---------------------------------------------------------------------------------------------------------------------------------
+
+delete[] a;  // Free dynamically allocated memory
+return 0;
+
+Frees the dynamically allocated memory for the array a[] to avoid memory leaks.
+---------------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------------------------------------------------------------------------------

@@ -1,0 +1,110 @@
+Header Files:
+
+#include <iostream>
+#include <vector>
+#include <stack>
+#include <omp.h>
+
+iostream: For input/output (cin, cout)
+vector: To store adjacency lists of the graph
+stack: Used for depth-first traversal
+omp.h: Enables parallel processing using OpenMP
+
+----------------------------------------------------------
+Global Declarations:
+
+const int MAX = 100000;
+vector<int> graph[MAX];
+bool visited[MAX];
+
+MAX: Maximum number of nodes supported
+graph[]: Adjacency list representation of the graph
+visited[]: Tracks whether a node has been visited
+
+----------------------------------------------------------
+Parallel DFS Function:
+
+void parallelDFS(int start)
+
+Starts DFS from the given start node
+Uses a stack to simulate recursive DFS iteratively
+----------------------------------------------------------
+
+stack<int> s;
+s.push(start);
+
+Initialize the stack with the starting node
+
+----------------------------------------------------------
+
+while (!s.empty()) {
+    int node = s.top();
+    s.pop();
+
+Continue DFS while there are nodes to process
+----------------------------------------------------------
+
+    if (!visited[node]) {
+        visited[node] = true;
+        cout << node << " ";
+
+Visit and print the node if it hasn’t been visited
+
+----------------------------------------------------------
+
+        #pragma omp parallel for
+        for (int i = 0; i < graph[node].size(); i++) {
+            int neighbor = graph[node][i];
+
+Parallel loop: multiple threads handle neighbors of the current node
+
+----------------------------------------------------------
+
+            if (!visited[neighbor]) {
+                #pragma omp critical
+                {
+                    s.push(neighbor);
+                }
+            }
+Only push unvisited neighbors onto the stack
+
+Use #pragma omp critical to avoid race conditions (stack is shared)
+
+----------------------------------------------------------
+----------------------------------------------------------
+Main Function:
+
+int main() {
+    int n, m, start;
+
+Variables: n (nodes), m (edges), start (DFS starting node)
+----------------------------------------------------------
+
+    cin >> n >> m >> start;
+
+User inputs graph parameters
+----------------------------------------------------------
+
+    for (int i = 0; i < m; i++) {
+        int u, v;
+        cin >> u >> v;
+        graph[u].push_back(v);
+        graph[v].push_back(u);
+    }
+
+Reads edges and builds the adjacency list
+Since it’s an undirected graph, add both directions
+----------------------------------------------------------
+
+    #pragma omp parallel for
+    for (int i = 0; i < n; i++) {
+        visited[i] = false;
+    }
+
+Initializes all nodes as unvisited — done in parallel
+----------------------------------------------------------
+
+    parallelDFS(start);
+Starts the parallel DFS from the given node
+----------------------------------------------------------
+----------------------------------------------------------

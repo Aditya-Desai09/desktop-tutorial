@@ -1,0 +1,126 @@
+Includes and Declarations
+
+#include<iostream>
+#include<stdlib.h>
+#include<omp.h>
+
+iostream: For input/output operations (cin, cout).
+stdlib.h: Includes functions for memory allocation (new, delete).
+omp.h: Provides OpenMP functionality to parallelize the code.
+-----------------------------------------------------------------------------------------------------
+using namespace std;
+Avoids needing to use std:: before standard objects and functions like cout, cin, etc.
+-----------------------------------------------------------------------------------------------------
+Function Declarations
+
+void bubble(int *, int);
+void swap(int &, int &);
+
+bubble(int *, int): Function that performs bubble sort on the array.
+swap(int &, int &): Function that swaps two elements by reference.
+-----------------------------------------------------------------------------------------------------
+
+Bubble Sort Function (bubble)
+
+void bubble(int *a, int n)
+{
+    for (int i = 0; i < n; i++) {
+        int first = i % 2;
+
+a: Pointer to the array to be sorted.
+n: Number of elements in the array.
+The loop runs n times, each time iterating through the array and performing comparisons
+-----------------------------------------------------------------------------------------------------
+        // Parallelized for odd/even indexed comparison
+        #pragma omp parallel
+        {
+
+#pragma omp parallel: Opens a parallel region, which will execute the code inside the curly braces in parallel by multiple threads.
+-----------------------------------------------------------------------------------------------------
+            // Print the number of threads once inside the parallel region
+            #pragma omp single
+            {
+                cout << "\nNumber of threads used: " << omp_get_num_threads() << endl;
+            }
+
+#pragma omp single: Ensures that only one thread executes the code inside this block. Here, it's used to print the number of threads used during the parallel region (since this only needs to be printed once).
+
+-----------------------------------------------------------------------------------------------------
+            #pragma omp for
+            for (int j = first; j < n - 1; j += 2) {
+                if (a[j] > a[j + 1]) {
+                    swap(a[j], a[j + 1]);
+                }
+            }
+
+#pragma omp for: Parallelizes the loop, distributing iterations across multiple threads.
+The loop compares adjacent elements a[j] and a[j+1] and swaps them if necessary.
+first = i % 2 is used to alternate between even and odd indexed comparisons (even iterations compare even indices, odd iterations compare odd indices).
+This alternating approach is used to parallelize comparisons and reduce conflicts between threads.
+-----------------------------------------------------------------------------------------------------
+Swap Function (swap)
+
+void swap(int &a, int &b)
+{
+    int temp = a;
+    a = b;
+    b = temp;
+}
+
+A utility function to swap two integers by reference. It uses a temporary variable (temp) to hold one value during the swap.
+-----------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------
+Main Function
+
+int *a, n;
+cout << "\nEnter total number of elements: ";
+cin >> n;
+
+a: Pointer to dynamically allocated memory for the array.
+n: Number of elements in the array.
+Prompts the user to input the number of elements.
+-----------------------------------------------------------------------------------------------------
+a = new int[n];
+cout << "\nEnter elements: ";
+for (int i = 0; i < n; i++) {
+    cin >> a[i];
+}
+
+Allocates memory dynamically for n integers using new.
+Asks the user to input the array elements.
+
+-----------------------------------------------------------------------------------------------------
+bubble(a, n);
+
+Calls the bubble() function to perform parallel bubble sort on the array a with n elements.
+
+-----------------------------------------------------------------------------------------------------
+cout << "\nSorted array is: ";
+for (int i = 0; i < n; i++) {
+    cout << a[i] << endl;
+}
+
+Prints the sorted array.
+
+-----------------------------------------------------------------------------------------------------
+delete[] a;  // Free dynamically allocated memory
+
+Frees the dynamically allocated memory using delete[] to avoid memory leaks.
+-----------------------------------------------------------------------------------------------------
+return 0;
+
+Exits the program.
+-----------------------------------------------------------------------------------------------------
+
+How the Parallel Bubble Sort Works
+In this parallel version of Bubble Sort, the algorithm is modified to use OpenMP for parallelism:
+
+The #pragma omp parallel directive creates a parallel region where multiple threads can execute parts of the bubble sort in parallel.
+
+The loop inside the parallel region is parallelized using #pragma omp for. This distributes the iterations of the inner loop across available threads.
+
+The odd-even strategy (first = i % 2) ensures that alternating elements are compared in each pass:
+
+Odd-indexed elements are compared first in one pass, then even-indexed elements are compared in the next pass. This ensures that adjacent pairs of elements are swapped correctly.
+
+Inside the parallel section, #pragma omp single ensures that only one thread prints the number of threads used in the parallel region.
